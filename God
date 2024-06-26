@@ -40,12 +40,10 @@ function AutoSpam()
         local closestEntity = get_closest_entity()
         if closestEntity then
             local entityPart = workspace:FindFirstChild(closestEntity.Name)
-
-            -- Check if entityPart exists and is not your character
             if entityPart and entityPart:FindFirstChild("Humanoid") and entityPart ~= local_player.Character then
                 local distance = local_player:DistanceFromCharacter(entityPart.HumanoidRootPart.Position)
 
-                if distance <= 5 then
+                if distance <= 15 then
                     ParryParry()
                 end
             end
