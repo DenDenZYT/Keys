@@ -1,0 +1,143 @@
+local Players = game:GetService('Players')
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local workspace = game:GetService("Workspace")
+local local_player = Players.LocalPlayer
+local runService = game:GetService("RunService")
+
+DenDenZ = {
+    AutoParry = false,
+    AutoSpam = false
+}
+
+local local_player = game.Players.LocalPlayer
+
+function get_closest_entity()
+    local closestEntity
+    local max_distance = math.huge
+
+    for _, entity in pairs(workspace.Alive:GetChildren()) do
+        if entity ~= local_player.Character and entity:FindFirstChild("HumanoidRootPart") then
+            local distance = (local_player.Character.HumanoidRootPart.Position - entity.HumanoidRootPart.Position).magnitude
+
+            if distance < max_distance then
+                closestEntity = entity
+                max_distance = distance
+            end
+        end
+    end
+
+    return closestEntity
+end
+
+function AutoSpam()
+
+    local function ParryParry()
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    end
+
+    if DenDenZ.AutoSpam then
+
+        local closestEntity = get_closest_entity()
+        if closestEntity then
+            local entityPart = workspace:FindFirstChild(closestEntity.Name)
+
+            -- Check if entityPart exists and is not your character
+            if entityPart and entityPart:FindFirstChild("Humanoid") and entityPart ~= local_player.Character then
+                local distance = local_player:DistanceFromCharacter(entityPart.HumanoidRootPart.Position)
+
+                if distance <= 5 then
+                    ParryParry()
+                end
+            end
+        end
+    end
+end
+
+runService.Heartbeat:Connect(AutoSpam)
+
+function AutoParry()
+    local function GetBall()
+        for _, ball in ipairs(workspace.Balls:GetChildren()) do
+            if ball:IsA("Part") then
+                if ball:GetAttribute("realBall") == true and ball:GetAttribute("target") == local_player.Name then
+                    return ball
+                elseif ball:FindFirstChild("Body") then
+                    return ball
+                end
+            end
+        end
+        return nil
+    end
+
+    local function GetVelocity(Ball)
+        if Ball:IsA("Part") and Ball:FindFirstChild("zoomies") then
+            return math.abs(Ball.zoomies.VectorVelocity.X)
+        end
+        return 0
+    end  
+
+    local function parry()
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    end
+
+    if DenDenZ.AutoParry then
+        local ball = GetBall()
+        local character = local_player.Character
+
+        if ball and character then
+            local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+            if torso then
+                local distance = (ball.Position - torso.Position).magnitude
+                local speedOfBall = GetVelocity(ball)
+
+                if speedOfBall > 0 and distance / speedOfBall <= 0.90 then
+                    parry()
+                end
+            end
+        end
+    end
+end
+
+runService.Heartbeat:Connect(AutoParry)
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "Vizard",
+    SubTitle = "Free Version",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Darker",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "swords" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+local Options = Fluent.Options
+
+local SpamToggle = Tabs.Main:AddToggle("AutoSpamToggle", { Title = "Auto Spam", Default = false })
+
+SpamToggle:OnChanged(function()
+    DenDenZ.AutoSpam = Options.AutoSpamToggle.Value
+end)
+
+Options.AutoSpamToggle:SetValue(false)
+
+local ParryToggle = Tabs.Main:AddToggle("AutoParryToggle", { Title = "Auto Parry", Default = false })
+
+ParryToggle:OnChanged(function()
+    DenDenZ.AutoParry = Options.AutoParryToggle.Value
+end)
+
+Options.AutoParryToggle:SetValue(false)
+
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
