@@ -46,7 +46,7 @@ function AutoSpam()
             if entityPart and entityPart:FindFirstChild("Humanoid") and entityPart.Humanoid.Health > 0 then
                 local distance = local_player:DistanceFromCharacter(entityPart.HumanoidRootPart.Position)
 
-                if distance <= 5 then
+                if distance <= 10 then
                     ClickParry()
                 end
             end
